@@ -315,8 +315,8 @@ export function buildApp({ config, db, payments, now, staticDir }: AppDeps): Fas
       .parse(req.query)
     const { rows } = await db.query<CampaignRow & { screen_names: string[]; plays: number }>(
       `SELECT c.*,
-          array(SELECT s.name FROM campaign_screens cs JOIN screens s ON s.id = cs.screen_id
-                 WHERE cs.campaign_id = c.id ORDER BY s.name) AS screen_names,
+          array(SELECT s.venue FROM campaign_screens cs JOIN screens s ON s.id = cs.screen_id
+                 WHERE cs.campaign_id = c.id ORDER BY s.venue) AS screen_names,
           (SELECT count(*)::int FROM plays p WHERE p.campaign_id = c.id) AS plays
          FROM campaigns c
         WHERE ($1 = 'all' AND c.status <> 'expired') OR c.status = $1
@@ -357,7 +357,7 @@ export function buildApp({ config, db, payments, now, staticDir }: AppDeps): Fas
 
   // Dashboard, booking pages and the screen player (single page app)
 
-  const dir = staticDir ?? resolve(process.cwd(), 'public')
+  const dir = resolve(staticDir ?? 'public')
   if (existsSync(resolve(dir, 'index.html'))) {
     app.register(fastifyStatic, { root: dir, wildcard: false, index: false })
     app.setNotFoundHandler((req, reply) => {

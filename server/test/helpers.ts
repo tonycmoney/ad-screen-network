@@ -58,7 +58,7 @@ export async function freshDb(): Promise<Db> {
 }
 
 export async function makeApp(
-  opts: { env?: Record<string, string>; payments?: PaymentGateway | null; now?: () => Date } = {},
+  opts: { env?: Record<string, string>; payments?: PaymentGateway | null; now?: () => Date; staticDir?: string } = {},
 ) {
   const db = await freshDb()
   const config = loadConfig({
@@ -70,7 +70,7 @@ export async function makeApp(
     ...opts.env,
   })
   const payments = opts.payments === undefined ? new FakeGateway() : opts.payments
-  const app = buildApp({ config, db, payments, now: opts.now ?? (() => NOW), staticDir: '/nonexistent' })
+  const app = buildApp({ config, db, payments, now: opts.now ?? (() => NOW), staticDir: opts.staticDir ?? '/nonexistent' })
   await app.ready()
   return { app, db, payments: payments as FakeGateway, config }
 }

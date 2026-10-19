@@ -1,4 +1,7 @@
 import { randomUUID } from 'node:crypto'
+import { mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { migrate } from '../src/migrations.js'
 import { seedScreens } from '../src/seed.js'
@@ -217,7 +220,7 @@ describe('owner review', () => {
 
     const queue = await ctx.app.inject({ url: '/api/admin/campaigns?status=in_review', headers })
     expect(queue.json()).toHaveLength(1)
-    expect(queue.json()[0].screen_names).toEqual(['Barber'])
+    expect(queue.json()[0].screen_names).toEqual(['Barber venue'])
 
     expect((await ctx.app.inject({ url: `/api/player/${s.player_key}/playlist` })).json().items).toEqual([])
     const ok = await ctx.app.inject({ method: 'POST', url: `/api/admin/campaigns/${id}/approve`, headers })
@@ -347,6 +350,21 @@ describe('platform', () => {
       'x-frame-options': 'DENY',
       'cache-control': 'no-store',
     })
+  })
+
+  it('serves the single page app for page routes but not unknown API paths', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'asn-web-'))
+    writeFileSync(join(dir, 'index.html'), '<!doctype html><title>app</title>')
+    const ctx = await makeApp({ staticDir: dir })
+    for (const url of ['/', '/admin', '/campaign/abc', '/play/key']) {
+      const res = await ctx.app.inject(url)
+      expect(res.statusCode).toBe(200)
+      expect(res.body).toContain('<title>app</title>')
+    }
+    expect((await ctx.app.inject('/play/key')).headers['x-frame-options']).toBeUndefined()
+    const api = await ctx.app.inject('/api/nope')
+    expect(api.statusCode).toBe(404)
+    expect(api.json()).toEqual({ error: 'Not found' })
   })
 
   it('migrations and seeding are idempotent', async () => {
