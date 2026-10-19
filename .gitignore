@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+server/public/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/
+pgdata/
