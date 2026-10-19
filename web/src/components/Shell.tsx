@@ -32,7 +32,7 @@ export function Shell({
       <main>{children}</main>
       <footer className="foot">
         <span>{config?.network_name}</span>
-        <a href="/admin">Owner sign in</a>
+        {window.location.pathname !== '/admin' && <a href="/admin">Owner sign in</a>}
       </footer>
     </div>
   )
